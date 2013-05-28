@@ -123,7 +123,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 if entry.get('sequence'):
                     seqcmd = '/usr/sbin/update-rc.d -f %s remove' % \
                                 entry.get('name')
-                    seqcmdrv = self.cmd.run(command)
+                    seqcmdrv = self.cmd.run(seqcmd)
                     start_sequence = int(entry.get('sequence'))
                     kill_sequence = 100 - start_sequence
                     bootcmd = '%s %d %d' % (bootcmd, start_sequence,

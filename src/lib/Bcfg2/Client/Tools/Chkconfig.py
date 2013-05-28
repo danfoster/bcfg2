@@ -55,9 +55,22 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         bootstatus = self.get_bootstatus(entry)
         if bootstatus is None:
             return True
-
         current_bootstatus = self.verify_bootstatus(entry, bootstatus)
-        current_srvstatus = self.check_service(entry)
+
+        svcstatus = self.check_service(entry)
+        if entry.get('status') == 'on':
+            if svcstatus:
+                current_srvstatus = True
+            else:
+                current_srvstatus = False
+        elif entry.get('status') == 'off':
+            if svcstatus:
+                current_srvstatus = False
+            else:
+                current_srvstatus = True
+        else:
+            # 'ignore' should verify
+            current_srvstatus = True
 
         # FIXME: this only takes into account the bootstatus attribute
         if current_bootstatus:
@@ -65,8 +78,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         else:
             entry.set('current_status', 'off')
 
-        return (current_bootstatus and (bootstatus == 'on')) and \
-               (current_srvstatus and (entry.get('status') == 'on'))
+        return current_bootstatus and current_srvstatus
 
     def InstallService(self, entry):
         """Install Service entry."""

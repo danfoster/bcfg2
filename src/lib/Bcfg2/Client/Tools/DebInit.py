@@ -51,7 +51,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 files.append(filename)
         if bootstatus == 'off':
             if files:
-                entry.set('current_status', 'on')
+                entry.set('current_bootstatus', 'on')
                 return False
             else:
                 return True
@@ -67,7 +67,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                         return False
             return True
         else:
-            entry.set('current_status', 'off')
+            entry.set('current_bootstatus', 'off')
             return False
 
     def VerifyService(self, entry, _):
@@ -93,8 +93,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             # 'ignore' should verify
             current_srvstatus = True
 
-        # FIXME: this only takes into account the bootstatus attribute
-        if current_bootstatus:
+        if svcstatus:
             entry.set('current_status', 'on')
         else:
             entry.set('current_status', 'off')

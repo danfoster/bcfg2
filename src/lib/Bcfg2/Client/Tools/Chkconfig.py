@@ -26,7 +26,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             srvdata = rv.stdout.splitlines()[0].split()
         else:
             # service not installed
-            entry.set('current_status', 'service not installed')
+            entry.set('current_bootstatus', 'service not installed')
             return False
 
         if len(srvdata) == 2:
@@ -34,7 +34,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             if bootstatus == srvdata[1]:
                 return True
             else:
-                entry.set('current_status', srvdata[1])
+                entry.set('current_bootstatus', srvdata[1])
                 return False
 
         try:
@@ -72,8 +72,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             # 'ignore' should verify
             current_srvstatus = True
 
-        # FIXME: this only takes into account the bootstatus attribute
-        if current_bootstatus:
+        if svcstatus:
             entry.set('current_status', 'on')
         else:
             entry.set('current_status', 'off')

@@ -21,10 +21,22 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                                           '-s']).stdout.splitlines()
                 if 'started' in line]
 
+    def get_default_svcs(self):
+        """Return a list of services in the 'default' runlevel."""
+        return [line.split()[0]
+                for line in self.cmd.run(['/sbin/rc-update',
+                                          'show']).stdout.splitlines()
+                if 'default' in line]
+
     def verify_bootstatus(self, entry, bootstatus):
         """Verify bootstatus for entry."""
         # get a list of all started services
-        allsrv = self.get_enabled_svcs()
+        allsrv = self.get_default_svcs()
+        # set current_bootstatus attribute
+        if entry.get('name') in allsrv:
+            entry.set('current_bootstatus', 'on')
+        else:
+            entry.set('current_bootstatus', 'off')
         if bootstatus == 'on':
             return entry.get('name') in allsrv
         else:
@@ -65,8 +77,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             # 'ignore' should verify
             current_srvstatus = True
 
-        # FIXME: this only takes into account the bootstatus attribute
-        if current_bootstatus:
+        if svcstatus:
             entry.set('current_status', 'on')
         else:
             entry.set('current_status', 'off')

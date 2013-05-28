@@ -102,7 +102,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                entry.get('current_status') == 'off':
                 svccmdrv = self.start_service(entry)
             elif (entry.get('status') == 'off' or buildmode) and \
-                 entry.get('current_status') == 'on':
+                    entry.get('current_status') == 'on':
                 svccmdrv = self.stop_service(entry)
             else:
                 svccmdrv = True  # ignore status attribute

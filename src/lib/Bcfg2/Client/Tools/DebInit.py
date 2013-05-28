@@ -121,7 +121,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                           entry.get('name')
                 if entry.get('sequence'):
                     seqcmd = '/usr/sbin/update-rc.d -f %s remove' % \
-                                entry.get('name')
+                             entry.get('name')
                     seqcmdrv = self.cmd.run(seqcmd)
                     start_sequence = int(entry.get('sequence'))
                     kill_sequence = 100 - start_sequence
@@ -140,7 +140,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                entry.get('current_status') == 'off':
                 svccmdrv = self.start_service(entry)
             elif (entry.get('status') == 'off' or buildmode) and \
-                 entry.get('current_status') == 'on':
+                    entry.get('current_status') == 'on':
                 svccmdrv = self.stop_service(entry)
             else:
                 svccmdrv = True  # ignore status attribute

@@ -18,13 +18,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     svcre = \
         re.compile(r'/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)')
 
-    # implement entry (Verify|Install) ops
-    def VerifyService(self, entry, _):
-        """Verify Service status for entry."""
-
-        if entry.get('status') == 'ignore':
-            return True
-
+    def verify_bootstatus(self, entry, bootstatus):
+        """Verify bootstatus for entry."""
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
 
@@ -75,9 +70,32 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             entry.set('current_status', 'off')
             return False
 
+    # implement entry (Verify|Install) ops
+    def VerifyService(self, entry, _):
+        """Verify Service status for entry."""
+        entry.set('target_status', entry.get('status'))  # for reporting
+        bootstatus = self.get_bootstatus(entry)
+        if bootstatus == None:
+            return True
+
+        current_bootstatus = self.verify_bootstatus(entry, bootstatus)
+        current_srvstatus = self.check_service(entry)
+
+        # FIXME: this only takes into account the bootstatus attribute
+        if current_bootstatus:
+            entry.set('current_status', 'on')
+        else:
+            entry.set('current_status', 'off')
+
+        return (current_bootstatus and (bootstatus == 'on')) and \
+               (current_srvstatus and (entry.get('status') == 'on'))
+
     def InstallService(self, entry):
-        """Install Service for entry."""
+        """Install Service entry."""
         self.logger.info("Installing Service %s" % (entry.get('name')))
+        bootstatus = entry.get('bootstatus')
+
+        # check if init script exists
         try:
             os.stat('/etc/init.d/%s' % entry.get('name'))
         except OSError:
@@ -85,20 +103,42 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                               entry.get('name'))
             return False
 
-        if entry.get('status') == 'off':
-            self.cmd.run("/usr/sbin/invoke-rc.d %s stop" % (entry.get('name')))
-            return self.cmd.run("/usr/sbin/update-rc.d -f %s remove" %
-                                entry.get('name')).success
+
+        if bootstatus != None:
+            seqcmdrv = True
+            if bootstatus == 'on':
+                # make sure service is enabled on boot
+                bootcmd = '/usr/sbin/update-rc.d %s defaults' % \
+                          entry.get('name')
+                if entry.get('sequence'):
+                    seqcmd = '/usr/sbin/update-rc.d -f %s remove' % \
+                              entry.get('name')
+                    seqcmdrv = self.cmd.run(command)
+                    start_sequence = int(entry.get('sequence'))
+                    kill_sequence = 100 - start_sequence
+                    bootcmd = '%s %d %d' % (bootcmd, start_sequence,
+                                            kill_sequence)
+            elif bootstatus == 'off':
+                # make sure service is disabled on boot
+                bootcmd = '/usr/sbin/update-rc.d -f %s remove' % \
+                          entry.get('name')
+            bootcmdrv = self.cmd.run(bootcmd)
+            if self.setup['servicemode'] == 'disabled':
+                # 'disabled' means we don't attempt to modify running svcs
+                return bootcmdrv and seqcmdrv
+            buildmode = self.setup['servicemode'] == 'build'
+            if (entry.get('status') == 'on' and not buildmode) and \
+               entry.get('current_status') == 'off':
+                svccmdrv = self.start_service(entry)
+            elif (entry.get('status') == 'off' or buildmode) and \
+                 entry.get('current_status') == 'on':
+                svccmdrv = self.stop_service(entry)
+            else:
+                svccmdrv = True  # ignore status attribute
+            return bootcmdrv and svccmdrv and seqcmdrv
         else:
-            command = "/usr/sbin/update-rc.d %s defaults" % (entry.get('name'))
-            if entry.get('sequence'):
-                if not self.cmd.run("/usr/sbin/update-rc.d -f %s remove" %
-                                    entry.get('name')).success:
-                    return False
-                start_sequence = int(entry.get('sequence'))
-                kill_sequence = 100 - start_sequence
-                command = "%s %d %d" % (command, start_sequence, kill_sequence)
-            return self.cmd.run(command).success
+            # when bootstatus is 'None', status == 'ignore'
+            return True
 
     def FindExtra(self):
         """Find Extra Debian Service entries."""

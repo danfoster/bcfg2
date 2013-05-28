@@ -36,7 +36,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         """
         entry.set('target_status', entry.get('status'))  # for reporting
         bootstatus = self.get_bootstatus(entry)
-        if bootstatus == None:
+        if bootstatus is None:
             return True
 
         # check if init script exists
@@ -63,7 +63,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         """Install Service entry."""
         self.logger.info('Installing Service %s' % entry.get('name'))
         bootstatus = entry.get('bootstatus')
-        if bootstatus != None:
+        if bootstatus is not None:
             if bootstatus == 'on':
                 # make sure service is enabled on boot
                 bootcmd = '/sbin/rc-update add %s default'

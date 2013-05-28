@@ -529,7 +529,7 @@ class SvcTool(Tool):
                   return value of status. If bootstatus is unspecified
                   and status is *ignore*, return None.
         """
-        if service.get('bootstatus') != None:
+        if service.get('bootstatus') is not None:
             return service.get('bootstatus')
         elif service.get('status') != 'ignore':
             return service.get('status')

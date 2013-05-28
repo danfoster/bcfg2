@@ -53,7 +53,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         """Verify Service status for entry."""
         entry.set('target_status', entry.get('status'))  # for reporting
         bootstatus = self.get_bootstatus(entry)
-        if bootstatus == None:
+        if bootstatus is None:
             return True
 
         current_bootstatus = self.verify_bootstatus(entry, bootstatus)
@@ -73,7 +73,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.cmd.run("/sbin/chkconfig --add %s" % (entry.get('name')))
         self.logger.info("Installing Service %s" % (entry.get('name')))
         bootstatus = entry.get('bootstatus')
-        if bootstatus != None:
+        if bootstatus is not None:
             if bootstatus == 'on':
                 # make sure service is enabled on boot
                 bootcmd = '/sbin/chkconfig %s %s --level 0123456' % \
